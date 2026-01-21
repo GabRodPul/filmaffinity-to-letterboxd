@@ -17,12 +17,12 @@ struct Args {
     user_id: u32,
 
     /// Number of pages to scrape
-    #[arg(short, long)]
+    #[arg(short('c'), long)]
     page_count: usize,
 
     /// Chromedriver/Geckodriver port
-    #[arg(short, long)]
-    driver_port: u16,
+    #[arg(short('p'), long)]
+    webdriver_port: u16,
 
     /// Output file name
     #[arg(short, long, default_value_t = String::from("result.csv"))]
@@ -57,9 +57,9 @@ fn save_csv(data: Vec<String>, out_str: &str) {
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-    let driver_url: &str = &format!("http://localhost:{}", args.driver_port);
+    let webdriver_url: &str = &format!("http://localhost:{}", args.webdriver_port);
     use fantoccini::{ClientBuilder};
-    let c = ClientBuilder::native().connect(driver_url).await.unwrap();
+    let c = ClientBuilder::native().connect(webdriver_url).await.unwrap();
     
     scrape(args, &c).await;
     c.close().await.unwrap();
