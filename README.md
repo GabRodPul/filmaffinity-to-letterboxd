@@ -7,12 +7,12 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 
 ## How to install
 ### Using cargo
-> [!TODO]
-> Add how to install using `cargo`
+> [!NOTE]
+> TODO: Add how to install using `cargo`
 
 ### Using provided binaries
-> [!NOTE] TODO:
-> Add how to install using provided binaries
+> [!NOTE]
+> TODO: Add how to install using provided binaries
 
 
 ## How to use
@@ -28,5 +28,5 @@ chromedriver --port=<webdriver_port>`
 filmaffinity-to-letterboxd -u <user_id> -p <webdriver_port>
 ```
 
-> [!TODO]
-> Add in the process of importing output into Letterboxd
+> [!NOTE]
+> TODO: Add in the process of importing output into Letterboxd
