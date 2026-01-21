@@ -1,14 +1,16 @@
-use std::fs;
-use fantoccini::Client;
+use std::{fs, time::Duration};
+use chaser_oxide::{Browser, BrowserConfig, ChaserPage, ChaserProfile};
+use futures::StreamExt;
 use itertools::Itertools;
 use select::{
     document::Document,
     predicate::{Class, Name}
 };
 
-use clap::{Parser};
+use clap::{ArgAction, Parser};
 
-/// Arguments
+/// Structs
+const DEF_PAGE_COUNT: usize = 1000;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -17,20 +19,21 @@ struct Args {
     user_id: u32,
 
     /// Number of pages to scrape
-    #[arg(short('c'), long)]
+    #[arg(short, long, default_value_t = DEF_PAGE_COUNT)]
     page_count: usize,
-
-    /// Chromedriver/Geckodriver port
-    #[arg(short('p'), long)]
-    webdriver_port: u16,
 
     /// Output file name
     #[arg(short, long, default_value_t = String::from("result.csv"))]
     output_file: String,
+    
+    /// If true, will delay requests after HTML processing by a random value within the integral range [1, 3]
+    #[arg(short('d'), long, default_value_t = true, action = ArgAction::SetFalse)]
+    // TODO: Consider adding custom delay times
+    use_delay: bool,
 
     /// Saves the file when an element isn't found
     #[arg(short, long, default_value_t = true)]
-    save_on_not_found: bool
+    save_on_error: bool
 }
 
 // Fn's
@@ -57,29 +60,49 @@ fn save_csv(data: Vec<String>, out_str: &str) {
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-    let webdriver_url: &str = &format!("http://localhost:{}", args.webdriver_port);
-    use fantoccini::{ClientBuilder};
-    let c = ClientBuilder::native().connect(webdriver_url).await.unwrap();
-    
-    scrape(args, &c).await;
-    c.close().await.unwrap();
+    scrape(args).await;
 }
 
-const STRUCTURE_CHANGE: &str = "FilmAffinity's HTML structure has changed and this repository needs updating";
-async fn scrape(args: Args, c: &Client) {
+const ERR_STRUCTURE_CHANGE: &str = "FilmAffinity's HTML structure has changed";
+const ERR_CLOUDFLARE:       &str = "WebDriver is being blocked by Cloudflare";
+async fn scrape(args: Args) {
     let base_url: &str = &format!("https://www.filmaffinity.com/en/userratings.php?user_id={}&orderby=4", args.user_id);
     let mut data = Vec::<String>::with_capacity(50 * args.page_count);
     data.push(CSV_HEADER.to_owned());
 
+    // FilmAffinity needs JS to do it's thing in order to display content
+    // Plain HTML requests won't work
+    let profile = ChaserProfile::windows().build();
+    let (browser, mut handler) = Browser::launch(
+        BrowserConfig::builder().new_headless_mode().build().unwrap()
+    ).await.unwrap();
+
+    tokio::spawn(async move {
+        while let Some(_) = handler.next().await {}
+    });
+
+    let c = ChaserPage::new(browser.new_page("about:blank").await.unwrap());
+    c.apply_profile(&profile).await.unwrap();
+
+    let delays: Vec<u8> = if args.use_delay {
+        println!("[WARNING] DELAY: The app will delay the next request after processing all data by a random integral range of [1, 3]");
+        println!("[WARNING] DELAY: Although as far as testing goes, no delay hasn't caused any issues, better to be safe than sorry");
+        println!("[WARNING] DELAY: To disable the delay, add `-d` to the flags");
+
+        let mut rng = fastrand::Rng::new();
+        std::iter::repeat_with(|| rng.u8(1..=3))
+            .take(args.page_count)
+            .collect()
+    } else {
+        vec![]
+    };
+    
     for p in 1..=args.page_count {
         let url = format!("{}&p={}&chv=list", base_url, p);
-        println!("Processing URL: {}", url);
+        println!("Processing page nº{:>4} for user {}: {}", p, args.user_id, url);
         
-        // FilmAffinity needs JS to do it's thing in order to display content
-        // Plain HTML requests won't work
         c.goto(&url).await.unwrap();
-        
-        let text: String = match c.source().await {
+        let text: String = match c.content().await {
             Err(e) => {
                 println!("{}", e);
                 return;
@@ -89,14 +112,29 @@ async fn scrape(args: Args, c: &Client) {
 
         let d = Document::from(&text[..]);
         if let Some(_) = text.find("<h1>Not Found</h1>") {
-            println!("[ERROR] User with id {} not found", args.user_id);
+            if p == 1 {
+                println!("[ERROR] User with id {} not found", args.user_id);
+            } else {
+                println!("[WARNING] Page nº {} not found; max `page_count` was {}{}", p, args.page_count, 
+                    if args.page_count == DEF_PAGE_COUNT { " (default)" } else { "" }
+                );
+
+                save_csv(data, &args.output_file);
+            }
             return;
         }
         drop(text);
 
         let movies = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
         if movies.is_empty() {
-            println!("[ERROR] {}", STRUCTURE_CHANGE);
+            println!("[ERROR] {}", 
+                if data.is_empty() {
+                    ERR_STRUCTURE_CHANGE 
+                } else { 
+                    // The existence of previous data means we're getting blocked by Cloudflare
+                    ERR_CLOUDFLARE 
+                }
+            );
             return;
         }
 
@@ -105,15 +143,15 @@ async fn scrape(args: Args, c: &Client) {
                 m.find(Class("mc-title")).collect::<Vec<_>>().first()
             {
                 None => {
-                    println!("[ERROR] Title: '<div>' not found. {}", STRUCTURE_CHANGE);
-                    if args.save_on_not_found { save_csv(data, &args.output_file); }
+                    println!("[ERROR] Title: '<div>' not found. {}", ERR_STRUCTURE_CHANGE);
+                    if args.save_on_error { save_csv(data, &args.output_file); }
                     return;
                 }   
                 Some(div) =>
                     match div.find(Class("d-md-none")).collect::<Vec<_>>().first() {
                         None => {
-                            println!("[ERROR] Title: '<a>' not found. {}", STRUCTURE_CHANGE);
-                            if args.save_on_not_found { save_csv(data, &args.output_file); }
+                            println!("[ERROR] Title: '<a>' not found. {}", ERR_STRUCTURE_CHANGE);
+                            if args.save_on_error { save_csv(data, &args.output_file); }
                             return;
                         },
                         Some(a) => a.text(),
@@ -124,8 +162,8 @@ async fn scrape(args: Args, c: &Client) {
                 m.find(Class("mc-year")).collect::<Vec<_>>().first()
             {
                 None => {
-                    println!("[ERROR] Year: '<span>' not found. {}", STRUCTURE_CHANGE);
-                    if args.save_on_not_found { save_csv(data, &args.output_file); }
+                    println!("[ERROR] Year: '<span>' not found. {}", ERR_STRUCTURE_CHANGE);
+                    if args.save_on_error { save_csv(data, &args.output_file); }
                     return;
                 }
                 Some(span) => span.text(),
@@ -135,8 +173,8 @@ async fn scrape(args: Args, c: &Client) {
                 m.find(Class("credits")).collect::<Vec<_>>().first()
             {
                 None => {
-                    println!("[ERROR] Director: '<span>' not found. {}", STRUCTURE_CHANGE);
-                    if args.save_on_not_found { save_csv(data, &args.output_file); }
+                    println!("[ERROR] Director: '<span>' not found. {}", ERR_STRUCTURE_CHANGE);
+                    if args.save_on_error { save_csv(data, &args.output_file); }
                     return;
                 }
                 Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>()
@@ -146,8 +184,8 @@ async fn scrape(args: Args, c: &Client) {
                 m.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
             {
                 None => {
-                    println!("[ERROR] Rating: '<span>' not found. {}", STRUCTURE_CHANGE);
-                    if args.save_on_not_found { save_csv(data, &args.output_file); }
+                    println!("[ERROR] Rating: '<span>' not found. {}", ERR_STRUCTURE_CHANGE);
+                    if args.save_on_error { save_csv(data, &args.output_file); }
                     return;
                 }
                 Some(div) => match div.text().trim().parse::<i32>() {
@@ -164,6 +202,10 @@ async fn scrape(args: Args, c: &Client) {
                               directors.iter().format(","),
                               rating
             ));
+        }
+
+        if args.use_delay {
+            std::thread::sleep(Duration::from_secs(delays[p-1] as u64));
         }
     }
 

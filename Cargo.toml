@@ -11,13 +11,13 @@ keywords = ["cli", "filmaffinity", "letterboxd", "webscraping", "chromedriver", 
 categories = ["command-line-utilities"]
 
 [dependencies]
-reqwest = "0.11.14"
-scraper = "0.16.0"
 select = "0.6.0"
-tokio = { version = "1.27.0", features = ["macros", "rt-multi-thread"] }
-fantoccini = "0.22.0"
+tokio = { version = "1.27.0", features = ["full"] }
 itertools = "0.14.0"
 clap = { version = "4.5.54", features = ["derive"] }
+chaser-oxide = "0.1.0"
+futures = "0.3.31"
+fastrand = "2.3.0"
 
 [profile.release]
 opt-level = 3
