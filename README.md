@@ -16,7 +16,7 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 
 ## How to use
 - Go to your FilmAffinity profile and copy your user ID number from the link.
-<img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9" />
+<p align="center"><img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9"   /></p>
 
 - Run the program, specifying at least user ID (`-u`). Wait for it to complete. By default, it'll fetch up to 1000 pages of content. If by any case, you have more, add `-p <page_count>`. For the full list of flags, run `filmaffinity-to-letterboxd -h`.
 ```
