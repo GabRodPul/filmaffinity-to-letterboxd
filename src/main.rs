@@ -141,7 +141,9 @@ async fn scrape(args: Args) -> Result<()> {
         }
         drop(text);
 
-        let entries = d.find(Class("user-ratings-list-resp")).collect::<Vec<_>>();
+        // I tried 'user-ratings-list-resp' as classname for a moment and forgot to update my command's new executable new
+        // But anyways, this selects all entries.
+        let entries = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
         if entries.is_empty() {
             if data.is_empty() {
                 bail!(ScrapingError::StructureChange {

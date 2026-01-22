@@ -40,5 +40,5 @@ filmaffinity-to-letterboxd -u <user_id>
 
 > [!WARNING]
 > When importing, not all entries will get exported. This may be due to an entry having a different name in Letterboxd or it's not there (series or individual chapters from series are usually the ones missing).
-> TODO: Add some sort of table for title conversions/pattern matching.
+> TODO: Add some sort of table for title conversions/pattern matching. Maybe ignoring anything that's not a film and storing a separate .csv for those will work, too.
 <p align="center"><img width="972" height="539" alt="image" src="https://github.com/user-attachments/assets/2facc8fa-9267-4d80-a865-429c055e6b1c" /></p>
