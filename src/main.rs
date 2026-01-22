@@ -60,7 +60,7 @@ impl Error for ScrapingError { }
 const CSV_HEADER: &str = "Title,Year,Directors,Rating10";
 fn save_csv(data: Vec<String>, out_str: &str) {
     if let Some(d) = data.last() && d != CSV_HEADER {
-        log(LogLevel::Info, &format!("[INFO] Saving a total of {} movies", data.len()));
+        log(LogLevel::Info, &format!("[INFO] Saving a total of {} movies", data.len()-1));
     } else {
         log(LogLevel::Info, "[INFO] Data empty when saving .csv - file will be written anyway.");
     }
