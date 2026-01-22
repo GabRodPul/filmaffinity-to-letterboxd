@@ -19,6 +19,9 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 <img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9" />
 
 - Run the program, specifying at least user ID (`-u`). Wait for it to complete. By default, it'll fetch up to 1000 pages of content. If by any case, you have more, add `-p <page_count>`. For the full list of flags, run `filmaffinity-to-letterboxd -h`.
+```
+filmaffinity-to-letterboxd -u <user_id>
+```
 
 > [!WARNING]
 > The app will delay the next request after processing all data by a random integral range of [1, 3].
@@ -26,9 +29,6 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 > To disable it, add `-d` to the flags.
 <img width="1472" height="524" alt="image" src="https://github.com/user-attachments/assets/957f8188-3af7-46a9-b58e-766b8a40ee6a" />
 
-```
-filmaffinity-to-letterboxd -u <user_id>
-```
 
 - Once you have your file ready (by default, saved as `fa-to-letterboxd-result.csv`), head to [Letterboxd's Import page](https://letterboxd.com/import/) and upload it by clicking "SELECT A FILE". It'll take a while to process it all.
 <img width="1026" height="513" alt="image" src="https://github.com/user-attachments/assets/e9ffdf8b-b25a-4239-8223-c24ce02cf226" />
