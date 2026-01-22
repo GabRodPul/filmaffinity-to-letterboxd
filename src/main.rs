@@ -25,7 +25,7 @@ struct Args {
     page_count: usize,
 
     /// Output file name
-    #[arg(short, long, default_value_t = String::from("filmaffinity-to-letterboxd-result.csv"))]
+    #[arg(short, long, default_value_t = String::from("fa-to-letterboxd-result.csv"))]
     output_file: String,
     
     /// If true, will delay requests after HTML processing by a random value within the integral range [1, 3]
