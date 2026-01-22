@@ -60,7 +60,7 @@ impl Error for ScrapingError { }
 const CSV_HEADER: &str = "Title,Year,Directors,Rating10";
 fn save_csv(data: Vec<String>, out_str: &str) {
     if let Some(d) = data.last() && d != CSV_HEADER {
-        log(LogLevel::Info, &format!("[INFO] Saving a total of {} movies", data.len()-1));
+        log(LogLevel::Info, &format!("[INFO] Saving a total of {} entries in '{}'", data.len()-1, out_str));
     } else {
         log(LogLevel::Info, "[INFO] Data empty when saving .csv - file will be written anyway.");
     }
@@ -109,7 +109,7 @@ async fn scrape(args: Args) -> Result<()> {
     let delays: Vec<u8> = if args.use_delay {
         log(LogLevel::Warn, "[WARNING] DELAY: The app will delay the next request after processing all data by a random integral range of [1, 3]");
         log(LogLevel::Warn, "[WARNING] DELAY: Although as far as testing goes, no delay hasn't caused any issues, better to be safe than sorry");
-        log(LogLevel::Warn, "[WARNING] DELAY: To disable the delay, add `-d` to the flags");
+        log(LogLevel::Warn, "[WARNING] DELAY: To disable it, add '-d' to the flags");
 
         let mut rng = fastrand::Rng::new();
         std::iter::repeat_with(|| rng.u8(1..=3))
@@ -131,7 +131,7 @@ async fn scrape(args: Args) -> Result<()> {
             if p == 1 {
                 bail!(ScrapingError::UserNotFound(args.user_id))
             } else {
-                log(LogLevel::Warn, &format!("[WARNING] Page nº {} not found; max `page_count` was {}{}", p, args.page_count, 
+                log(LogLevel::Warn, &format!("[WARNING] Page nº {} not found; max 'page_count' was {}{}", p, args.page_count, 
                     if args.page_count == DEF_PAGE_COUNT { " (default)" } else { "" }
                 ));
 
@@ -141,11 +141,11 @@ async fn scrape(args: Args) -> Result<()> {
         }
         drop(text);
 
-        let movies = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
-        if movies.is_empty() {
+        let entries = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
+        if entries.is_empty() {
             if data.is_empty() {
                 bail!(ScrapingError::StructureChange {
-                    name:       "Movies", 
+                    name:       "Entries", 
                     element:    "<div class=\".. mb-4\">",
                 })
             } else { 
@@ -154,9 +154,9 @@ async fn scrape(args: Args) -> Result<()> {
             }
         }
 
-        for m in movies {
+        for e in entries {
             let title = match
-                m.find(Class("mc-title")).collect::<Vec<_>>().first()
+                e.find(Class("mc-title")).collect::<Vec<_>>().first()
             {
                 None => bail!(ScrapingError::StructureChange { 
                     name:    "Title", 
@@ -173,7 +173,7 @@ async fn scrape(args: Args) -> Result<()> {
             };
 
             let year = match
-                m.find(Class("mc-year")).collect::<Vec<_>>().first()
+                e.find(Class("mc-year")).collect::<Vec<_>>().first()
             {
                 None => bail!(ScrapingError::StructureChange { 
                     name:    "Year", 
@@ -183,7 +183,7 @@ async fn scrape(args: Args) -> Result<()> {
             };
 
             let directors = match
-                m.find(Class("credits")).collect::<Vec<_>>().first()
+                e.find(Class("credits")).collect::<Vec<_>>().first()
             {
                 None => bail!(ScrapingError::StructureChange { 
                     name:    "Director", 
@@ -193,7 +193,7 @@ async fn scrape(args: Args) -> Result<()> {
             };
 
             let rating: String = match
-                m.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
+                e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
             {
                 None => bail!(ScrapingError::StructureChange {
                     name:    "Rating", 

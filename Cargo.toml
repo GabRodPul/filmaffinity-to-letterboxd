@@ -1,5 +1,5 @@
 [package]
-name = "filmaffinity-to-letterboxd"
+name = "fa-to-letterboxd"
 version = "0.1.0"
 edition = "2024"
 authors = ["GabRodPul <103140108+GabRodPul@users.noreply.github.com>"]
