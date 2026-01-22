@@ -6,8 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - name: Build Rust Projects with Cross
-      - uses: houseabsolute/actions-rust-cross@v1jobs
+        name: Build Rust Projects with Cross
+        uses: houseabsolute/actions-rust-cross@v1jobs
   release:
     name: Release - ${{ matrix.platform.os-name }}
     strategy:
