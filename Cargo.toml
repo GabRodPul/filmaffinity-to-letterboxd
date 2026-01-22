@@ -8,7 +8,7 @@ readme = "README.md"
 license = "GPL-2.0-or-later"
 homepage = "https://github.com/GabRodPul/filmaffinity-to-letterboxd"
 repository = "https://github.com/GabRodPul/filmaffinity-to-letterboxd"
-keywords = ["cli", "filmaffinity", "letterboxd", "webscraping", "chromedriver", "geckodriver"]
+keywords = ["cli", "filmaffinity", "letterboxd", "webscraping", "chaser-oxide"]
 categories = ["command-line-utilities"]
 
 [dependencies]
