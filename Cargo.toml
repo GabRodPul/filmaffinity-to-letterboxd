@@ -5,6 +5,7 @@ edition = "2024"
 authors = ["GabRodPul <103140108+GabRodPul@users.noreply.github.com>"]
 description = "A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's import format"
 readme = "README.md"
+license = "GPL-2.0-or-later"
 homepage = "https://github.com/GabRodPul/filmaffinity-to-letterboxd"
 repository = "https://github.com/GabRodPul/filmaffinity-to-letterboxd"
 keywords = ["cli", "filmaffinity", "letterboxd", "webscraping", "chromedriver", "geckodriver"]
